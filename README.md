@@ -1,5 +1,5 @@
 # Ising Model Simulation
-A portfolio project cointaining a simulation of the Ising modell (known from theoretical physics), using advanced consepts such as Markov Chains and Monte Carlo simulations.
+A portfolio project cointaining a simulation of the Ising modell (known from theoretical physics), using advanced concepts such as Markov Chains and Monte Carlo simulations.
 ______________
 ## Introduction
 The Ising model is a rather simple model in statistical physics describing ferromagnetism. In the model ferromagnetism arrises from the interaction of the spins of electrons. These interactions are described by the following Hamiltonian:
