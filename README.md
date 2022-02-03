@@ -1,6 +1,6 @@
 # Ising Model Simulation
 A portfolio project cointaining a simulation of the Ising modell (known from theoretical physics), using advanced consepts such as Markov Chains and Monte Carlo simulations.
- 
+______________
 ## Introduction
 The Ising model is a rather simple model in statistical physics describing ferromagnetism. In the model ferromagnetism arrises from the interaction of the spins of electrons. These interactions are described by the following Hamiltonian:
 
@@ -26,6 +26,7 @@ The observables of interest are going to be calculated using the Monte Carlo tec
 $$
 A = \int_V dx f(x) = \lim_{n\to\infty}\frac{1}{N}\sum_{i=1}^{N}f(x_i)
 $$
+
 
 ______________________________________________________________________________
 
