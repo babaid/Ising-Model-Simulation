@@ -1,6 +1,7 @@
 module Ising
 
 export run, Lattice, Magnetization
+include("visualize.jl")
 
 
 using StatsBase, Plots, ProgressBars, IJulia
@@ -160,7 +161,7 @@ function run(config)
     end
     
     #start the simulation
-    loops = 3*300*300
+    loops = 15000
     s = Lattice(size, cold)
     s[:, 1] = s[:, end]
     s[1, :] = s[end, :]
@@ -168,49 +169,67 @@ function run(config)
     dT = (T_end -T_start)/1000
     iter = ProgressBar(T_start:dT:T_end)
     magnetization = []
+    spins =[]
+    #new simulation logfile
+    sim_cntr = 1
+    while isfile(string("../data/sims/", sim_cntr, "_sim_data_ising2d"))
+        sim_cntr+=1
+    end
+    
+    spin_log = open(string("../data/sims/", sim_cntr, "_sim_data_ising2d"), "a")
+    mag_log = open(string("../data/sims/", sim_cntr, "_sim_data_ising2d"), "a")
+    
     if B == 0
-        anim = @animate for T in iter
+        for T in iter      
             
-           
             IJulia.clear_output(true)
             println(iter, "Temperature $T K")
+            
             for j in 1:loops
                 step!(s, J, T)
             end
             
-            
-            push!(magnetization, sum(lattice)/length(lattice))
-                
-    
-            heatmap(s, axis=nothing, c=:grays, aspect_ratio=1)
+            push!(magnetization, sum(s)/length(s))
+            push!(spins, copy(s))         
+
         end
         
     else
-        anim = @animate for T in iter
+        for T in iter
             
             
             IJulia.clear_output(true)
             println(iter, "Temperature $T K")
+            
             for j in 1:loops
                 step!(s, J, B, T)
             end
             
             push!(magnetization, sum(lattice)/length(lattice))
-                
-            
-            heatmap(s, axis=nothing, c=:grays, aspect_ratio=1)
+            push!(spins, copy(s))
+           
         end
-    end   
+    end
     
-    gif(anim, "../plots/simulation2.gif", fps=25)
+    for plane in spins
+        for  elem in plane
+            
+            write(spin_log, string(elem, "\t"))
+              
+        end
+        write(spin_log, "\n")
+    end
     
-    return magnetization
+    close(spin_log)
+    close(mag_log)
+    return (spins, magnetization)
     
 end
 
 function Magnetization(s)
     return sum(s)/length(s)
 end
+
 
 
 
