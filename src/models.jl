@@ -4,6 +4,7 @@ export run, Lattice
 
 using StatsBase, Plots
 
+
 function Lattice(size, cold=true)
     if cold
         s = sample([-1], size)
@@ -154,10 +155,12 @@ function run(config)
     end
     
     #start the simulation
-    loops = 10000
+    loops = 100000
     s = Lattice(size, cold)
-    #25 frames per second, 500 frames in total, animation will be 20 seconds
-    dT = (T_end -T_start)/500
+    s[:, 1] = s[:, end]
+    s[1, :] = s[end, :]
+    #25 frames per second, 1000 frames in total, animation will be 40 seconds
+    dT = (T_end -T_start)/1000
     
     if B == 0
         anim = @animate for T in T_start:dT:T_end
@@ -175,6 +178,6 @@ function run(config)
             heatmap(s, axis=nothing, c=:grays)
         end
     end   
-    gif(anim, "plots/simulation.gif", fps=25)
+    gif(anim, "../plots/simulation.gif", fps=25)
 end
 end
