@@ -1,10 +1,12 @@
 module Ising
 
-export run, Lattice
-
-using StatsBase, Plots
+export run, Lattice, Magnetization
 
 
+using StatsBase, Plots, ProgressBars, IJulia
+
+
+"""Inits a lattice, no boundary conditions implemented"""
 function Lattice(size, cold=true)
     if cold
         s = sample([-1], size)
@@ -46,9 +48,10 @@ function H_B(lattice, J, B)
     end
     E*=0.5
     E += B* sum(lattice)
-    return E #because of double counting
+    return E 
 end
 
+"""Updates one lattice point"""
 function step!(s, J, B, T)
     
     b = 1/(T*1.38e-23)
@@ -84,6 +87,7 @@ function step!(s, J, B, T)
             s[i, j] = -s[i, j]
             s[:, 1] = s[:, end]
             s[1, :] = s[end, :]
+            return
         end
     end
 end   
@@ -122,6 +126,7 @@ function step!(s, J, T)
             s[i, j] = -s[i, j]
             s[:, 1] = s[:, end]
             s[1, :] = s[end, :]
+            return
         end
     end
 end   
@@ -130,7 +135,7 @@ end
 
 
     
-""" Runs simulation for a given configuration, saves an animation"""
+""" Runs simulation for a given configuration, saves an animation, returns magnetization"""
 function run(config)
     T_start, T_end, B, J = 0, 0, 0, 0
     cold = true
@@ -155,29 +160,58 @@ function run(config)
     end
     
     #start the simulation
-    loops = 100000
+    loops = 3*300*300
     s = Lattice(size, cold)
     s[:, 1] = s[:, end]
     s[1, :] = s[end, :]
     #25 frames per second, 1000 frames in total, animation will be 40 seconds
     dT = (T_end -T_start)/1000
-    
+    iter = ProgressBar(T_start:dT:T_end)
+    magnetization = []
     if B == 0
-        anim = @animate for T in T_start:dT:T_end
+        anim = @animate for T in iter
+            
+           
+            IJulia.clear_output(true)
+            println(iter, "Temperature $T K")
             for j in 1:loops
                 step!(s, J, T)
             end
-            heatmap(s, axis=nothing, c=:grays)
+            
+            
+            push!(magnetization, sum(lattice)/length(lattice))
+                
+    
+            heatmap(s, axis=nothing, c=:grays, aspect_ratio=1)
         end
         
     else
-        anim = @animate for T in T_start:dT:T_end
+        anim = @animate for T in iter
+            
+            
+            IJulia.clear_output(true)
+            println(iter, "Temperature $T K")
             for j in 1:loops
                 step!(s, J, B, T)
             end
-            heatmap(s, axis=nothing, c=:grays)
+            
+            push!(magnetization, sum(lattice)/length(lattice))
+                
+            
+            heatmap(s, axis=nothing, c=:grays, aspect_ratio=1)
         end
     end   
-    gif(anim, "../plots/simulation.gif", fps=25)
+    
+    gif(anim, "../plots/simulation2.gif", fps=25)
+    
+    return magnetization
+    
 end
+
+function Magnetization(s)
+    return sum(s)/length(s)
+end
+
+
+
 end
