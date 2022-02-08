@@ -141,6 +141,8 @@ function run(config)
     T_start, T_end, B, J = 0, 0, 0, 0
     cold = true
     size = nothing
+    samples = 1000
+    dT = 0.1
     #configuration
     for (key, value) in config
         if key=="T_start"
@@ -155,29 +157,28 @@ function run(config)
             cold = value
         elseif key =="size"
             size = value
-        
+        elseif key = "samples"
+            samples = value
+        elseif key=="dT"
+            dT = value
         end
         
     end
     
     #start the simulation
-    loops = 15000
+    
     s = Lattice(size, cold)
     s[:, 1] = s[:, end]
     s[1, :] = s[end, :]
+    
     #25 frames per second, 1000 frames in total, animation will be 40 seconds
-    dT = (T_end -T_start)/1000
+    
     iter = ProgressBar(T_start:dT:T_end)
     magnetization = []
     spins =[]
     #new simulation logfile
     sim_cntr = 1
-    while isfile(string("../data/sims/", sim_cntr, "_sim_data_ising2d"))
-        sim_cntr+=1
-    end
     
-    spin_log = open(string("../data/sims/", sim_cntr, "_sim_data_ising2d"), "a")
-    mag_log = open(string("../data/sims/", sim_cntr, "_sim_data_ising2d"), "a")
     
     if B == 0
         for T in iter      
@@ -185,7 +186,7 @@ function run(config)
             IJulia.clear_output(true)
             println(iter, "Temperature $T K")
             
-            for j in 1:loops
+            for j in 1:samples
                 step!(s, J, T)
             end
             
@@ -201,7 +202,7 @@ function run(config)
             IJulia.clear_output(true)
             println(iter, "Temperature $T K")
             
-            for j in 1:loops
+            for j in 1:samples
                 step!(s, J, B, T)
             end
             
@@ -210,6 +211,14 @@ function run(config)
            
         end
     end
+    
+    #save logfile
+    while isfile(string("../data/sims/", sim_cntr, "_sim_data_ising2d"))
+        sim_cntr+=1
+    end
+    
+    spin_log = open(string("../data/sims/", sim_cntr, "_sim_data_ising2d.txt"), "a")
+    #mag_log = open(string("../data/sims/", sim_cntr, "_sim_data_ising2d.txt"), "a")
     
     for plane in spins
         for  elem in plane
@@ -221,7 +230,8 @@ function run(config)
     end
     
     close(spin_log)
-    close(mag_log)
+    #close(mag_log)
+    
     return (spins, magnetization)
     
 end

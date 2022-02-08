@@ -12,7 +12,8 @@ function gif_from_data(data)
            anim_cntr+=1
     end
     
-    gif(anim, string("../plots/", anim_cntr, "_anim_ising2d.gif"), fps=25) 
+    gif(anim, string("../plots/", anim_cntr, "_anim_ising2d.gif"), fps=10)
+    gif(anim,string("../plots/", anim_cntr, "_anim_ising2d.mp4"), fps=10)
     
 end
 end
