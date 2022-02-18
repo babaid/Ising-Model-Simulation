@@ -52,8 +52,8 @@ function H_B(lattice, J, B)
     return E 
 end
 
-"""Updates one lattice point"""
-function step!(s, J, B, T)
+"""Updates one lattice point, with periodic boundary conditions"""
+function step_periodic!(s, J, B, T)
     
     b = 1/(T*1.38e-23)
     
@@ -61,7 +61,7 @@ function step!(s, J, B, T)
     e_1 = H_B(s, J, B)
     
     #flip a random spin
-    i, j = rand(2:length(s[:, 1])), rand(2:length(s[1, :])) 
+    i, j = rand(2:length(s[:, 1])-1), rand(2:length(s[1, :])-1)
     s[i, j] = -s[i, j]
     
     #periodic boundaries
@@ -92,23 +92,25 @@ function step!(s, J, B, T)
         end
     end
 end   
-function step!(s, J, T)
+
+
+"""
+One update step without periodic boundary conditions
+"""
+function step_non_periodic!(s, J, B, T)
     
     b = 1/(T*1.38e-23)
     
     #calculate energy
-    e_1 = H_0(s, J)
+    
+    e_1 = H_B(s, J, B)
     
     #flip a random spin
-    i, j = rand(2:length(s[:, 1])), rand(2:length(s[1, :])) 
+    i, j = rand(1:length(s[:, 1])), rand(1:length(s[1,:]))
     s[i, j] = -s[i, j]
     
-    #periodic boundaries
-    s[:, 1] = s[:, end]
-    s[1, :] = s[end, :]
-    
     #calculate  new energy
-    e_2 = H_0(s, J)
+    e_2 = H_B(s, J, B)
     
     #energy difference
     de = e_2-e_1
@@ -125,8 +127,6 @@ function step!(s, J, T)
         else
             #back to state before if rejected
             s[i, j] = -s[i, j]
-            s[:, 1] = s[:, end]
-            s[1, :] = s[end, :]
             return
         end
     end
@@ -135,83 +135,77 @@ end
 
 
 
-    
 """ Runs simulation for a given configuration, saves an animation, returns magnetization"""
-function run(config)
-    T_start, T_end, B, J = 0, 0, 0, 0
-    cold = true
-    size = nothing
-    samples = 1000
-    dT = 0.1
-    #configuration
+function run(config::Dict{String, Any}=Dict([("T_start", 0), ("T_end", 500),("dT", 1), ("J", 2e-21), ("B", 0), ("size", (50, 50)), ("samples", 1000), ("periodic", false), ("cold_start", true)]) )
+    
+    conf = Dict([("T_start", 0), ("T_end", 500),("dT", 1), ("J", 2e-21), ("B", 0), ("size", (50, 50)), ("samples", 1000), ("periodic", false), ("cold_start", true)])
+    
+    
+    
+    #update configuration values
     for (key, value) in config
-        if key=="T_start"
-            T = value
-        elseif key=="T_end" 
-            T_end=value
-        elseif key=="B" #magnetic field
-            B = value
-        elseif key=="J" #defines energy scale and critical temperature
-            J = value
-        elseif key == "cold_start"
-            cold = value
-        elseif key =="size"
-            size = value
-        elseif key = "samples"
-            samples = value
-        elseif key=="dT"
-            dT = value
-        end
-        
+       conf[key]=value
     end
     
+    
+    
     #start the simulation
-    
-    s = Lattice(size, cold)
-    s[:, 1] = s[:, end]
-    s[1, :] = s[end, :]
-    
     #25 frames per second, 1000 frames in total, animation will be 40 seconds
-    
-    iter = ProgressBar(T_start:dT:T_end)
+    iter = ProgressBar(conf["T_start"]:conf["dT"]:conf["T_end"])
     magnetization = []
     spins =[]
     #new simulation logfile
     sim_cntr = 1
     
     
-    if B == 0
-        for T in iter      
+    s = Lattice(conf["size"], conf["cold_start"])
+    
+    if conf["periodic"]
+        
+        s[:, 1] = s[:, end]
+        s[1, :] = s[end, :]
+        
+        for T in iter
+            IJulia.clear_output(true)
+            println(iter, "Temperature $T K")
+            #the situation at a specific T
+            
+            for j in 1:conf["samples"]
+                step_periodic!(s, conf["B"], conf["J"], T)
+            end
+            
+             #save spins and magnetization
+            push!(magnetization, sum(s)/length(s))
+            push!(spins, copy(s))  
+        end
+       
+        
+    elseif !conf["periodic"]
+        
+        for T in iter
             
             IJulia.clear_output(true)
             println(iter, "Temperature $T K")
             
-            for j in 1:samples
-                step!(s, J, T)
+            for j in 1:conf["samples"]
+                step_non_periodic!(s, conf["B"], conf["J"], T)
             end
             
             push!(magnetization, sum(s)/length(s))
-            push!(spins, copy(s))         
-
-        end
+            push!(spins, copy(s))  
         
-    else
-        for T in iter
             
-            
-            IJulia.clear_output(true)
-            println(iter, "Temperature $T K")
-            
-            for j in 1:samples
-                step!(s, J, B, T)
-            end
-            
-            push!(magnetization, sum(lattice)/length(lattice))
-            push!(spins, copy(s))
-           
         end
+
+        
     end
     
+    
+    
+    
+    
+    
+    #Saving log files
     #save logfile
     while isfile(string("../data/sims/", sim_cntr, "_sim_data_ising2d"))
         sim_cntr+=1
