@@ -136,7 +136,7 @@ end
 
 
 """ Runs simulation for a given configuration, saves an animation, returns magnetization"""
-function run(config::Dict{String, Any}=Dict([("T_start", 0), ("T_end", 500),("dT", 1), ("J", 2e-21), ("B", 0), ("size", (50, 50)), ("samples", 1000), ("periodic", false), ("cold_start", true)]) )
+function run_sim(config::Dict{String, Any}=Dict([("T_start", 0), ("T_end", 500),("dT", 1), ("J", 2e-21), ("B", 0), ("size", (50, 50)), ("samples", 1000), ("periodic", false), ("cold_start", true)]) )
     
     conf = Dict([("T_start", 0), ("T_end", 500),("dT", 1), ("J", 2e-21), ("B", 0), ("size", (50, 50)), ("samples", 1000), ("periodic", false), ("cold_start", true)])
     
